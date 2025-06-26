@@ -113,12 +113,13 @@ if annotations:
     def make_clickable(shot_id):
         return f'<a href="?shot_id={shot_id}">{shot_id}</a>'
 
-    annotation_df["Shot ID"] = annotation_df["shot_id"].apply(make_clickable)
+    annotation_df.insert(0, "Shot ID", annotation_df["shot_id"].apply(make_clickable))
+    annotation_df = annotation_df.drop(columns=["shot_id"], errors="ignore")
     st.write("Click a Shot ID to edit its annotation.", unsafe_allow_html=True)
     st.write(annotation_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Handle query param shot_id
-query_params = st.query_params()
+query_params = st.experimental_get_query_params()
 if "shot_id" in query_params:
     st.session_state["shot_id"] = query_params["shot_id"][0]
 
