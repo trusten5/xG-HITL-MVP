@@ -81,35 +81,66 @@ with st.expander("⚠️ Danger Zone: Clear All Data"):
 
 # Upload Form Section
 with st.expander("➕ Upload New Shot"):
-    team = st.text_input("Team Shooting")
-    opponent = st.text_input("Opponent")
-    game_date = st.date_input("Date of Game")
-    match_minute = st.number_input("Match Minute", min_value=0, max_value=120, step=1)
-    shot_location = st.text_input("Shot Location (e.g. Penalty Box)")
-    needs_review = st.checkbox("Needs Review?", value=False)
-    video_file = st.file_uploader("Upload Shot Video (.mp4)", type=["mp4"])
+    team = st.text_input("Team Shooting", key="team")
+    opponent = st.text_input("Opponent", key="opponent")
+    game_date = st.date_input("Date of Game", key="date")
+    match_minute = st.number_input("Match Minute", min_value=0, max_value=120, step=1, key="minute")
+    shot_location = st.text_input("Shot Location (e.g. coordinates)", key="location")
+    needs_review = st.checkbox("Needs Review?", value=False, key="review")
+    video_file = st.file_uploader("Upload Shot Video (.mp4)", type=["mp4"], key="video")
 
-    if st.button("Save Shot") and team and opponent and video_file:
-        shot_id = f"shot_{uuid.uuid4().hex[:6]}"
-        video_path = os.path.join(VIDEOS_DIR, f"{shot_id}.mp4")
-        with open(video_path, "wb") as f:
-            f.write(video_file.read())
+    if st.button("Save Shot"):
+        missing_fields = []
+        if not team:
+            missing_fields.append("Team Shooting")
+        if not opponent:
+            missing_fields.append("Opponent")
+        if not video_file:
+            missing_fields.append("Video File")
 
-        metadata = {
-            "Shot ID": shot_id,
-            "Team Shooting": team,
-            "Opponent": opponent,
-            "Date of Game": str(game_date),
-            "Match Minute": match_minute,
-            "Shot Location": shot_location,
-            "AI Certainty %": "TBD",
-            "Annotated?": False,
-            "Needs Review?": needs_review
-        }
+        if missing_fields:
+            st.error(f"{', '.join(missing_fields)} was not filled in")
+        else:
+            duplicate = any(
+                s["Team Shooting"] == team and s["Opponent"] == opponent and s["Date of Game"] == str(game_date)
+                for s in shots
+            )
+            if duplicate:
+                confirm = st.radio("This shot seems to be a repeat. Are you sure you want to submit?", ["No", "Yes"], key="confirm_repeat")
+                if confirm == "No":
+                    st.warning("Submission canceled.")
+                elif confirm == "Yes":
+                    pass
+                else:
+                    st.stop()
 
-        save_shot_metadata(metadata, shot_id)
-        st.success(f"Shot {shot_id} uploaded and saved.")
-        st.rerun()
+            shot_id = f"shot_{uuid.uuid4().hex[:6]}"
+            video_path = os.path.join(VIDEOS_DIR, f"{shot_id}.mp4")
+            with open(video_path, "wb") as f:
+                f.write(video_file.read())
+
+            metadata = {
+                "Shot ID": shot_id,
+                "Team Shooting": team,
+                "Opponent": opponent,
+                "Date of Game": str(game_date),
+                "Match Minute": match_minute,
+                "Shot Location": shot_location,
+                "AI Certainty %": "TBD",
+                "Annotated?": False,
+                "Needs Review?": needs_review
+            }
+
+            save_shot_metadata(metadata, shot_id)
+            st.success(f"Shot {shot_id} uploaded and saved.")
+            st.session_state.pop("team", None)
+            st.session_state.pop("opponent", None)
+            st.session_state.pop("date", None)
+            st.session_state.pop("minute", None)
+            st.session_state.pop("location", None)
+            st.session_state.pop("review", None)
+            st.session_state.pop("video", None)
+            st.rerun()
 
 # Display Unannotated Shots Table
 unannotated_shots = [s for s in shots if not s.get("Annotated?")]
@@ -167,7 +198,7 @@ if "shot_id" in st.session_state:
         gk_position = st.multiselect("Goalkeeper Position", ["Out of Position", "On Line", "Rushing", "Screened"], default=prior_annotation.get("goalkeeper_position", []))
         assist_type = st.selectbox("Assist Type", ["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"], index=["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"].index(prior_annotation.get("assist_type", "Through Ball")))
         trajectory = st.selectbox("Pass Trajectory", ["Ground Pass", "Lofted", "Bouncing", "Driven Cross"], index=["Ground Pass", "Lofted", "Bouncing", "Driven Cross"].index(prior_annotation.get("pass_trajectory", "Ground Pass")))
-        touches = st.number_input("Number of Touches Before Shot", min_value=0, max_value=10, step=1, value=prior_annotation.get("touches", 0))
+        touches = st.number_input("Number of Touches Before Shot", min_value=0, max_value=50, step=1, value=prior_annotation.get("touches", 0))
         set_piece = st.selectbox("Last Set Piece Type", ["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"], index=["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"].index(prior_annotation.get("last_set_piece", "Live Ball")))
         notes = st.text_area("General Notes / Flags", value=prior_annotation.get("notes", ""))
 
