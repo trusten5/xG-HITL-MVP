@@ -128,7 +128,7 @@ if annotations:
     st.write(annotation_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Handle query param shot_id
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 if "shot_id" in query_params:
     st.session_state["shot_id"] = query_params["shot_id"][0]
 
@@ -157,7 +157,7 @@ if "shot_id" in st.session_state:
         gk_position = st.multiselect("Goalkeeper Position", ["Out of Position", "On Line", "Rushing", "Screened"], default=prior_annotation.get("goalkeeper_position", []))
         assist_type = st.selectbox("Assist Type", ["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"], index=["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"].index(prior_annotation.get("assist_type", "Through Ball")))
         trajectory = st.selectbox("Pass Trajectory", ["Ground Pass", "Lofted", "Bouncing", "Driven Cross"], index=["Ground Pass", "Lofted", "Bouncing", "Driven Cross"].index(prior_annotation.get("pass_trajectory", "Ground Pass")))
-        touches = st.number_input("Number of Touches Before Shot", min_value=0, max_value=50, step=1, value=prior_annotation.get("touches", 0))
+        touches = st.number_input("Number of Touches Before Shot", min_value=0, max_value=10, step=1, value=prior_annotation.get("touches", 0))
         set_piece = st.selectbox("Last Set Piece Type", ["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"], index=["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"].index(prior_annotation.get("last_set_piece", "Live Ball")))
         notes = st.text_area("General Notes / Flags", value=prior_annotation.get("notes", ""))
 
