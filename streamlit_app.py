@@ -4,6 +4,24 @@ import os
 import glob
 import uuid
 import pandas as pd
+import warnings
+
+# Config and UI Setup
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+st.set_page_config(page_title="xG Annotation MVP", layout="wide")
+st.markdown("""
+<style>
+    html, body, [class*="css"]  {
+        font-family: 'Segoe UI', sans-serif;
+    }
+    [data-testid="stNotification"] {display: none;}
+    .main { background-color: #f9f9fb; }
+    .block-container { padding-top: 2rem; }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("xG Annotation Dashboard")
+st.caption("Internal MVP for Human-in-the-Loop xG Annotation. Built to demonstrate video annotation, metric tagging, and review.")
 
 # Directories
 DATA_DIR = "data"
@@ -50,15 +68,6 @@ annotations = load_annotations()
 shot_ids = [shot["Shot ID"] for shot in shots]
 shot_index = {shot["Shot ID"]: shot for shot in shots}
 annotation_index = {a["shot_id"]: a for a in annotations}
-
-st.markdown("""
-<style>
-    .main { background-color: #f9f9fb; }
-    .block-container { padding-top: 2rem; }
-</style>
-""", unsafe_allow_html=True)
-
-st.title("xG Annotation Dashboard")
 
 # Upload Form Section
 with st.expander("➕ Upload New Shot"):
