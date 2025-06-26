@@ -17,7 +17,7 @@ A web-based dashboard for uploading, managing, and annotating football (soccer) 
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourcompany/xG-HITL-mvp.git
+   git clone https://github.com/trusten5/xG-HITL-mvp.git
    cd xG-HITL-mvp
    ```
 2. Install dependencies:
