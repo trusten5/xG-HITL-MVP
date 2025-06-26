@@ -49,6 +49,7 @@ shots = load_shot_data()
 annotations = load_annotations()
 shot_ids = [shot["Shot ID"] for shot in shots]
 shot_index = {shot["Shot ID"]: shot for shot in shots}
+annotation_index = {a["shot_id"]: a for a in annotations}
 
 st.markdown("""
 <style>
@@ -108,6 +109,7 @@ else:
 if "shot_id" in st.session_state:
     shot_id = st.session_state["shot_id"]
     shot = shot_index.get(shot_id)
+    prior_annotation = annotation_index.get(shot_id, {})
     if shot:
         st.title(f"📝 Annotating {shot_id}")
         st.subheader(f"{shot['Team Shooting']} vs {shot['Opponent']}")
@@ -120,17 +122,17 @@ if "shot_id" in st.session_state:
 
         st.markdown("### Extracted Metadata")
         st.write({k: v for k, v in shot.items() if k not in ["Shot ID"]})
-        looks_good = st.checkbox("Data looks correct?", value=True)
+        looks_good = st.checkbox("Data looks correct?", value=prior_annotation.get("looks_good", True))
 
         st.markdown("### Annotate Metrics")
-        body_part = st.selectbox("Body Part Used", ["Left Foot", "Right Foot", "Header", "Other"])
-        execution_type = st.selectbox("Shot Execution Type", ["First-Time", "Controlled - Static", "Controlled - on Run", "Volley", "Half-Volley"])
-        gk_position = st.multiselect("Goalkeeper Position", ["Out of Position", "On Line", "Rushing", "Screened"])
-        assist_type = st.selectbox("Assist Type", ["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"])
-        trajectory = st.selectbox("Pass Trajectory", ["Ground Pass", "Lofted", "Bouncing", "Driven Cross"])
-        touches = st.number_input("Number of Touches Before Shot", min_value=0, max_value=10, step=1)
-        set_piece = st.selectbox("Last Set Piece Type", ["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"])
-        notes = st.text_area("General Notes / Flags")
+        body_part = st.selectbox("Body Part Used", ["Left Foot", "Right Foot", "Header", "Other"], index=["Left Foot", "Right Foot", "Header", "Other"].index(prior_annotation.get("body_part", "Left Foot")))
+        execution_type = st.selectbox("Shot Execution Type", ["First-Time", "Controlled - Static", "Controlled - on Run", "Volley", "Half-Volley"], index=["First-Time", "Controlled - Static", "Controlled - on Run", "Volley", "Half-Volley"].index(prior_annotation.get("execution_type", "First-Time")))
+        gk_position = st.multiselect("Goalkeeper Position", ["Out of Position", "On Line", "Rushing", "Screened"], default=prior_annotation.get("goalkeeper_position", []))
+        assist_type = st.selectbox("Assist Type", ["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"], index=["Through Ball", "Cut-Back", "Cross", "Rebound", "Shot from Set Piece"].index(prior_annotation.get("assist_type", "Through Ball")))
+        trajectory = st.selectbox("Pass Trajectory", ["Ground Pass", "Lofted", "Bouncing", "Driven Cross"], index=["Ground Pass", "Lofted", "Bouncing", "Driven Cross"].index(prior_annotation.get("pass_trajectory", "Ground Pass")))
+        touches = st.number_input("Number of Touches Before Shot", min_value=0, max_value=10, step=1, value=prior_annotation.get("touches", 0))
+        set_piece = st.selectbox("Last Set Piece Type", ["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"], index=["Live Ball", "Corner", "Direct FK", "Indirect FK", "Penalty", "Throw"].index(prior_annotation.get("last_set_piece", "Live Ball")))
+        notes = st.text_area("General Notes / Flags", value=prior_annotation.get("notes", ""))
 
         if st.button("Submit Annotation"):
             annotation = {
@@ -155,5 +157,10 @@ if "shot_id" in st.session_state:
 # Summary Table of Completed Annotations
 if annotations:
     st.markdown("### ✅ Completed Annotations Summary")
-    annotation_df = pd.DataFrame(annotations)
-    st.dataframe(annotation_df.sort_values(by="shot_id", ascending=False))
+    annotation_df = pd.DataFrame(annotations).sort_values(by="shot_id", ascending=False)
+    for i, row in annotation_df.iterrows():
+        with st.expander(f"{row['shot_id']}"):
+            st.write(row.to_dict())
+            if st.button(f"Edit {row['shot_id']}"):
+                st.session_state["shot_id"] = row['shot_id']
+                st.rerun()
