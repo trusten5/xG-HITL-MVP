@@ -105,6 +105,23 @@ if unannotated_shots:
 else:
     st.info("✅ All shots have been annotated.")
 
+# Summary Table of Completed Annotations with clickable Shot ID
+if annotations:
+    st.markdown("### ✅ Completed Annotations Summary")
+    annotation_df = pd.DataFrame(annotations).sort_values(by="shot_id", ascending=False)
+
+    def make_clickable(shot_id):
+        return f'<a href="?shot_id={shot_id}">{shot_id}</a>'
+
+    annotation_df["Shot ID"] = annotation_df["shot_id"].apply(make_clickable)
+    st.write("Click a Shot ID to edit its annotation.", unsafe_allow_html=True)
+    st.write(annotation_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+# Handle query param shot_id
+query_params = st.experimental_get_query_params()
+if "shot_id" in query_params:
+    st.session_state["shot_id"] = query_params["shot_id"][0]
+
 # Annotation Section
 if "shot_id" in st.session_state:
     shot_id = st.session_state["shot_id"]
@@ -153,14 +170,3 @@ if "shot_id" in st.session_state:
             st.success("Annotation saved!")
             st.session_state.pop("shot_id")
             st.rerun()
-
-# Summary Table of Completed Annotations
-if annotations:
-    st.markdown("### ✅ Completed Annotations Summary")
-    annotation_df = pd.DataFrame(annotations).sort_values(by="shot_id", ascending=False)
-    for i, row in annotation_df.iterrows():
-        with st.expander(f"{row['shot_id']}"):
-            st.write(row.to_dict())
-            if st.button(f"Edit {row['shot_id']}"):
-                st.session_state["shot_id"] = row['shot_id']
-                st.rerun()
