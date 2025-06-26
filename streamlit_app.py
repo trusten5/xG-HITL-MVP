@@ -119,7 +119,7 @@ if annotations:
     st.write(annotation_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Handle query param shot_id
-query_params = st.query_params()
+query_params = st.experimental_get_query_params()
 if "shot_id" in query_params:
     st.session_state["shot_id"] = query_params["shot_id"][0]
 
