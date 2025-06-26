@@ -69,6 +69,16 @@ shot_ids = [shot["Shot ID"] for shot in shots]
 shot_index = {shot["Shot ID"]: shot for shot in shots}
 annotation_index = {a["shot_id"]: a for a in annotations}
 
+# Clear All Data Button
+with st.expander("⚠️ Danger Zone: Clear All Data"):
+    if st.button("Delete ALL shots and annotations", type="primary"):
+        for file in glob.glob(os.path.join(DATA_DIR, "*.json")):
+            os.remove(file)
+        for file in glob.glob(os.path.join(VIDEOS_DIR, "*.mp4")):
+            os.remove(file)
+        st.success("All shots, annotations, and videos have been deleted.")
+        st.rerun()
+
 # Upload Form Section
 with st.expander("➕ Upload New Shot"):
     team = st.text_input("Team Shooting")
